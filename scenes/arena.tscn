@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://u1dh5komdpgy" path="res://scenes/ball.tscn" id="1_wl4x5"]
 [ext_resource type="Script" uid="uid://ctrmth5d2o6n2" path="res://network_manager.gd" id="1_xdvfk"]
 [ext_resource type="Script" uid="uid://b7ah1e1780eqt" path="res://game_manager.gd" id="4_gm"]
+[ext_resource type="Texture2D" uid="uid://c68ek7jqs63js" path="res://space-occhacks.jpeg" id="5_7ft05"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf776"]
 albedo_color = Color(0.078431375, 1, 1, 1)
@@ -43,7 +44,15 @@ properties/0/path = NodePath(".:position")
 properties/0/spawn = true
 properties/0/replication_mode = 1
 
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_7ft05"]
+panorama = ExtResource("5_7ft05")
+
+[sub_resource type="Sky" id="Sky_xdvfk"]
+sky_material = SubResource("PanoramaSkyMaterial_7ft05")
+
 [sub_resource type="Environment" id="Environment_xdvfk"]
+background_mode = 2
+sky = SubResource("Sky_xdvfk")
 tonemap_mode = 2
 glow_enabled = true
 
