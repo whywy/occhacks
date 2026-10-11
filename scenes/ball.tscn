@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://u1dh5komdpgy"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf776"]
+albedo_color = Color(1, 0, 1, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_dea70"]
+material = SubResource("StandardMaterial3D_cf776")
+radius = 0.25
+height = 0.5
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_dea70"]
+radius = 0.25
+
+[node name="Ball" type="CharacterBody3D" unique_id=1259484499]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=102238728]
+mesh = SubResource("SphereMesh_dea70")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1608683870]
+shape = SubResource("SphereShape3D_dea70")
