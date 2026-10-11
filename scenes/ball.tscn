@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://u1dh5komdpgy"]
 
+[ext_resource type="Script" uid="uid://cakrdl0nu1hdl" path="res://scenes/ball.gd" id="1_7s4qf"]
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf776"]
 albedo_color = Color(0.9843137, 1, 0, 1)
 
@@ -47,6 +49,7 @@ material = SubResource("StandardMaterial3D_ycv3x")
 size = Vector3(0.01, 0.15, 0.01)
 
 [node name="Ball" type="CharacterBody3D" unique_id=1259484499]
+script = ExtResource("1_7s4qf")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=102238728]
 mesh = SubResource("SphereMesh_dea70")
