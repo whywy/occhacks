@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cakrdl0nu1hdl" path="res://scenes/ball.gd" id="1_7s4qf"]
 [ext_resource type="Shader" uid="uid://bqxjxddfndxck" path="res://scenes/ball.gdshader" id="2_cxlvu"]
+[ext_resource type="Script" uid="uid://bu64xar4goah8" path="res://scenes/trail.gd" id="3_f7cbr"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yujqa"]
 render_priority = 0
@@ -74,3 +75,6 @@ one_shot = true
 explosiveness = 1.0
 process_material = SubResource("ParticleProcessMaterial_jsssl")
 draw_pass_1 = SubResource("BoxMesh_yu668")
+
+[node name="Trail" type="MeshInstance3D" parent="." unique_id=1856276952]
+script = ExtResource("3_f7cbr")
