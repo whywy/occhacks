@@ -3,14 +3,6 @@
 [ext_resource type="PackedScene" uid="uid://t5tq5li1fgfh" path="res://scenes/paddle.tscn" id="1_olpmc"]
 [ext_resource type="PackedScene" uid="uid://u1dh5komdpgy" path="res://scenes/ball.tscn" id="1_wl4x5"]
 [ext_resource type="Script" uid="uid://ctrmth5d2o6n2" path="res://network_manager.gd" id="1_xdvfk"]
-[ext_resource type="Script" uid="uid://cakrdl0nu1hdl" path="res://scenes/ball.gd" id="2_olpmc"]
-[ext_resource type="Script" uid="uid://bu64xar4goah8" path="res://scenes/trail.gd" id="3_xdvfk"]
-
-[sub_resource type="SphereMesh" id="SphereMesh_dea70"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xdvfk"]
-transparency = 1
-albedo_color = Color(1, 1, 1, 0.05882353)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf776"]
 albedo_color = Color(0.078431375, 1, 1, 1)
@@ -50,19 +42,20 @@ properties/0/path = NodePath(".:position")
 properties/0/spawn = true
 properties/0/replication_mode = 1
 
+[sub_resource type="Environment" id="Environment_xdvfk"]
+tonemap_mode = 2
+glow_enabled = true
+
 [node name="Arena" type="Node3D" unique_id=1950720247]
 script = ExtResource("1_xdvfk")
 
 [node name="Ball" parent="." unique_id=1259484499 instance=ExtResource("1_wl4x5")]
-script = ExtResource("2_olpmc")
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="Ball" unique_id=1724057226]
-mesh = SubResource("SphereMesh_dea70")
-script = ExtResource("3_xdvfk")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6936214, 0)
 
 [node name="Wall_PosZ" type="MeshInstance3D" parent="." unique_id=891444800]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 5)
-material_override = SubResource("StandardMaterial3D_xdvfk")
+material_override = SubResource("StandardMaterial3D_cf776")
+transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosZ" unique_id=1026158420]
@@ -73,7 +66,8 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegZ" type="MeshInstance3D" parent="." unique_id=1593964721]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, -5)
-material_override = SubResource("StandardMaterial3D_xdvfk")
+material_override = SubResource("StandardMaterial3D_cf776")
+transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegZ" unique_id=21389258]
@@ -84,7 +78,8 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_PosX" type="MeshInstance3D" parent="." unique_id=683993672]
 transform = Transform3D(-4.371139e-07, 0, 0.2, 0, 10, 0, -10, 0, -8.742278e-09, 5, 0, 0)
-material_override = SubResource("StandardMaterial3D_xdvfk")
+material_override = SubResource("StandardMaterial3D_cf776")
+transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosX" unique_id=834606508]
@@ -95,7 +90,8 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegX" type="MeshInstance3D" parent="." unique_id=150221336]
 transform = Transform3D(-4.371139e-07, 0, 0.2, 0, 10, 0, -10, 0, -8.742278e-09, -5, 0, 0)
-material_override = SubResource("StandardMaterial3D_xdvfk")
+material_override = SubResource("StandardMaterial3D_cf776")
+transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegX" unique_id=1596354816]
@@ -106,7 +102,8 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_PosY" type="MeshInstance3D" parent="." unique_id=1421811185]
 transform = Transform3D(10, 0, 0, 0, -4.371139e-07, -0.2, 0, 10, -8.742278e-09, 0, 5, 0)
-material_override = SubResource("StandardMaterial3D_xdvfk")
+material_override = SubResource("StandardMaterial3D_cf776")
+transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosY" unique_id=556286001]
@@ -117,7 +114,8 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegY" type="MeshInstance3D" parent="." unique_id=312531998]
 transform = Transform3D(10, 0, 0, 0, -4.371139e-07, -0.2, 0, 10, -8.742278e-09, 0, -5, 0)
-material_override = SubResource("StandardMaterial3D_xdvfk")
+material_override = SubResource("StandardMaterial3D_cf776")
+transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegY" unique_id=1840729703]
@@ -129,7 +127,8 @@ shape = SubResource("BoxShape3D_dea70")
 [node name="DebugCamera" type="Camera3D" parent="." unique_id=1740400600]
 transform = Transform3D(0.70710677, -0.3641869, 0.6061087, 0, 0.8571673, 0.515038, -0.70710677, -0.3641869, 0.6061087, 14, 12, 14)
 visible = false
-fov = 102.0
+current = true
+fov = 45.0
 
 [node name="Anchor_PosZ" type="Node3D" parent="." unique_id=285258275]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.7)
@@ -152,7 +151,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.7)
 replication_config = SubResource("SceneReplicationConfig_4ag8t")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_NegZ" unique_id=1283632584]
-transform = Transform3D(-0.17364821, 0, 0.9848078, 0, 1, 0, -0.9848078, 0, -0.17364821, 2, 0, 4)
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -4)
+current = true
 fov = 80.0
 
 [node name="Anchor_PosX" type="Node3D" parent="." unique_id=644951180]
@@ -188,8 +188,7 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 4
 replication_config = SubResource("SceneReplicationConfig_naajo")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_PosY" unique_id=472465608]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -2, 0, -4)
-current = true
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2, 0, -4)
 fov = 80.0
 
 [node name="Anchor_NegY" type="Node3D" parent="." unique_id=992731149]
@@ -203,3 +202,6 @@ replication_config = SubResource("SceneReplicationConfig_41jku")
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_NegY" unique_id=230089778]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
 fov = 80.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=481138624]
+environment = SubResource("Environment_xdvfk")
