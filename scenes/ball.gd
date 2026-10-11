@@ -9,6 +9,11 @@ signal bounced
 @export var max_speed: float = 20.0
 @export var lock_z: bool = false
 @export var plane_z: float = 0.0
+@export var countdown_seconds: int = 3
+
+@onready var countdown_label: Label = $CanvasLayer/CountdownLabel
+
+var launched: bool = false
 
 @onready var sparks: GPUParticles3D = get_node_or_null("Sparks") as GPUParticles3D
 
@@ -25,6 +30,8 @@ func _ready() -> void:
 	speed = maxf(start_speed, 0.1)
 	velocity = Vector3.ZERO
 
+	await get_tree().create_timer(0.6).timeout
+	countdown_label.text = ""
 
 func serve() -> void:
 	if not _simulates_ball():

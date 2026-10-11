@@ -177,7 +177,6 @@ replication_config = SubResource("SceneReplicationConfig_4ag8t")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_NegZ" unique_id=1283632584]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -4)
-current = true
 fov = 80.0
 
 [node name="Anchor_PosX" type="Node3D" parent="." unique_id=644951180]
