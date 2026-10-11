@@ -47,6 +47,7 @@ properties/0/replication_mode = 1
 script = ExtResource("1_xdvfk")
 
 [node name="Ball" parent="." unique_id=1259484499 instance=ExtResource("1_wl4x5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6936214, 0)
 script = ExtResource("2_olpmc")
 
 [node name="Wall_PosZ" type="MeshInstance3D" parent="." unique_id=891444800]
