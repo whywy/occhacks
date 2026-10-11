@@ -1,6 +1,8 @@
 extends CharacterBody3D
-## The server simulates the ball; MultiplayerSynchronizer replicates its position
-## and velocity to every client. Offline/F6 play uses the same movement locally.
+## The host simulates the ball. Its MultiplayerSynchronizer sends position and
+## velocity to clients. Offline F6 uses the same simulation locally.
+
+signal bounced
 
 @export var start_speed: float = 8.0
 @export var speed_increase_per_round: float = 1.0
@@ -11,64 +13,77 @@ extends CharacterBody3D
 @onready var sparks: GPUParticles3D = get_node_or_null("Sparks") as GPUParticles3D
 
 var speed: float = 0.0
+var is_running := false
 var rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+	add_to_group("ball")
 	rng.randomize()
 	if lock_z:
 		global_position.z = plane_z
 	speed = maxf(start_speed, 0.1)
-	if _simulates_ball():
-		launch()
+	velocity = Vector3.ZERO
 
 
-func launch() -> void:
+func serve() -> void:
 	if not _simulates_ball():
 		return
-
+	global_position = Vector3(0.0, 0.0, 0.0)
+	if lock_z:
+		global_position.z = plane_z
 	var direction: Vector3
 	if lock_z:
 		var angle := rng.randf_range(0.0, TAU)
 		direction = Vector3(cos(angle), sin(angle), 0.0)
 	else:
-		# Keep the ball from serving almost straight along the Y axis.
 		var y_component := rng.randf_range(-0.7, 0.7)
 		var angle := rng.randf_range(0.0, TAU)
 		var horizontal := sqrt(1.0 - y_component * y_component)
 		direction = Vector3(cos(angle) * horizontal, y_component, sin(angle) * horizontal)
-
 	velocity = direction.normalized() * speed
+	is_running = true
+
+
+func stop_ball() -> void:
+	if _simulates_ball():
+		is_running = false
+		velocity = Vector3.ZERO
+
+
+func reset_to_center() -> void:
+	if not _simulates_ball():
+		return
+	is_running = false
+	velocity = Vector3.ZERO
+	global_position = Vector3.ZERO
+	if lock_z:
+		global_position.z = plane_z
 
 
 func increase_speed_for_round() -> void:
-	if not _simulates_ball() or velocity.is_zero_approx():
+	if not _simulates_ball():
 		return
 	speed = minf(speed + speed_increase_per_round, max_speed)
-	velocity = velocity.normalized() * speed
+	if not velocity.is_zero_approx():
+		velocity = velocity.normalized() * speed
 
 
 func _physics_process(delta: float) -> void:
-	if not _simulates_ball():
+	if not _simulates_ball() or not is_running:
 		return
-	if velocity.is_zero_approx():
-		launch()
-		if velocity.is_zero_approx():
-			return
-
 	var collision := move_and_collide(velocity * delta)
 	if collision:
 		var normal := collision.get_normal()
 		velocity = velocity.bounce(normal).normalized() * speed
+		bounced.emit()
 		_emit_sparks(collision.get_position(), normal)
-
 	if lock_z:
 		velocity.z = 0.0
 		global_position.z = plane_z
 
 
 func _simulates_ball() -> bool:
-	# F6 uses OfflineMultiplayerPeer; network games simulate on the host only.
 	return multiplayer.multiplayer_peer is OfflineMultiplayerPeer or multiplayer.is_server()
 
 

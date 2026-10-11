@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://t5tq5li1fgfh" path="res://scenes/paddle.tscn" id="1_olpmc"]
 [ext_resource type="PackedScene" uid="uid://u1dh5komdpgy" path="res://scenes/ball.tscn" id="1_wl4x5"]
 [ext_resource type="Script" uid="uid://ctrmth5d2o6n2" path="res://network_manager.gd" id="1_xdvfk"]
+[ext_resource type="Script" uid="uid://b7ah1e1780eqt" path="res://game_manager.gd" id="4_gm"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf776"]
 albedo_color = Color(0.078431375, 1, 1, 1)
@@ -49,6 +50,9 @@ glow_enabled = true
 [node name="Arena" type="Node3D" unique_id=1950720247]
 script = ExtResource("1_xdvfk")
 
+[node name="GameManager" type="Node" parent="." unique_id=1034865456]
+script = ExtResource("4_gm")
+
 [node name="Ball" parent="." unique_id=1259484499 instance=ExtResource("1_wl4x5")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6936214, 0)
 
@@ -59,6 +63,8 @@ transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosZ" unique_id=1026158420]
+collision_layer = 0
+collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wall_PosZ/WallBody" unique_id=965236032]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 0)
@@ -71,6 +77,8 @@ transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegZ" unique_id=21389258]
+collision_layer = 0
+collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wall_NegZ/WallBody" unique_id=490168318]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 0)
@@ -83,6 +91,8 @@ transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosX" unique_id=834606508]
+collision_layer = 0
+collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wall_PosX/WallBody" unique_id=1713877273]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 0)
@@ -95,6 +105,8 @@ transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegX" unique_id=1596354816]
+collision_layer = 0
+collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wall_NegX/WallBody" unique_id=592154575]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 0)
@@ -107,6 +119,8 @@ transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosY" unique_id=556286001]
+collision_layer = 0
+collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wall_PosY/WallBody" unique_id=1041025850]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 0)
@@ -119,6 +133,8 @@ transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegY" unique_id=1840729703]
+collision_layer = 0
+collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wall_NegY/WallBody" unique_id=1064157516]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 0)
