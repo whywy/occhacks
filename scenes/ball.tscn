@@ -87,5 +87,12 @@ draw_pass_1 = SubResource("BoxMesh_yu668")
 [node name="Trail" type="MeshInstance3D" parent="." unique_id=1856276952]
 script = ExtResource("3_f7cbr")
 
-[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=866739231]
 replication_config = SubResource("SceneReplicationConfig_ball")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2048482584]
+
+[node name="CountdownLabel" type="Label" parent="CanvasLayer" unique_id=1642263010]
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_font_sizes/font_size = 96

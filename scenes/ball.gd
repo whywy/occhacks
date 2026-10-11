@@ -7,6 +7,11 @@ extends CharacterBody3D
 @export var max_speed: float = 20.0
 @export var lock_z: bool = false
 @export var plane_z: float = 0.0
+@export var countdown_seconds: int = 3
+
+@onready var countdown_label: Label = $CanvasLayer/CountdownLabel
+
+var launched: bool = false
 
 @onready var sparks: GPUParticles3D = get_node_or_null("Sparks") as GPUParticles3D
 
@@ -15,13 +20,25 @@ var rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	rng.randomize()
 	if lock_z:
 		global_position.z = plane_z
-	speed = maxf(start_speed, 0.1)
-	if _simulates_ball():
-		launch()
+	speed = start_speed
+	start_round()
 
+func start_round() -> void:
+	launched = false
+	velocity = Vector3.ZERO
+
+	for i in range(countdown_seconds, 0, -1):
+		countdown_label.text = str(i)
+		await get_tree().create_timer(1.0).timeout
+
+	countdown_label.text = "GO!"
+	launch()
+	launched = true
+
+	await get_tree().create_timer(0.6).timeout
+	countdown_label.text = ""
 
 func launch() -> void:
 	if not _simulates_ball():
@@ -49,6 +66,8 @@ func increase_speed_for_round() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not launched:
+		return
 	if not _simulates_ball():
 		return
 	if velocity.is_zero_approx():
