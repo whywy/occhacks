@@ -20,13 +20,19 @@ func _physics_process(delta: float) -> void:
 	var input_y := Input.get_axis("paddle_down", "paddle_up")
 	var input_direction := Vector2(input_x, input_y).limit_length(1.0)
 
+	# Convert the camera's screen-right and screen-up directions
+	# into the anchor's local face plane.
 	var camera_right := anchor.global_basis.inverse() * camera.global_basis.x
 	var camera_up := anchor.global_basis.inverse() * camera.global_basis.y
 
 	var face_direction := Vector2(
 		camera_right.x * input_direction.x + camera_up.x * input_direction.y,
 		camera_right.y * input_direction.x + camera_up.y * input_direction.y
-	).limit_length(1.0)
+	)
+
+	# Keep speed consistent if the camera is angled relative to the face.
+	if face_direction.length_squared() > 0.0:
+		face_direction = face_direction.normalized()
 
 	position.x = clampf(
 		position.x + face_direction.x * speed * delta,
