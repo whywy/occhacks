@@ -4,8 +4,18 @@ extends CharacterBody3D
 @export var side_limit: float = 4.0
 @export var offline_test_paddle_name: StringName = &"Paddle_PosZ"
 @export_range(0.0, 1.0, 0.05) var bot_accuracy: float = 0.78
+@export_range(0.0, 1.0, 0.01) var bot_miss_chance: float = 0.08
 @export var bot_reaction_time: float = 0.22
-@export var mouse_sensitivity: float = 0.003
+@export var camera_smoothing: float = 7.0
+@export_range(0.0, 0.5, 0.01) var camera_follow_amount: float = 0.18
+@export var camera_follow_limit: float = 1.4
+@export_range(1.0, 2.0, 0.05) var boost_speed_multiplier: float = 1.4
+@export var boost_fuel_max: float = 2.5
+@export var boost_drain_per_second: float = 1.0
+@export var boost_recharge_per_second: float = 0.65
+@export_range(0.0005, 0.02, 0.0005) var mouse_tilt_sensitivity: float = 0.012
+@export_range(5.0, 35.0, 1.0) var max_paddle_tilt_degrees: float = 20.0
+@export_range(0.5, 10.0, 0.5) var tilt_return_speed: float = 1.5
 
 var bot_enabled := true
 var match_active := false
@@ -13,17 +23,37 @@ var eliminated := false
 var _rng := RandomNumberGenerator.new()
 var _bot_timer := 0.0
 var _bot_target := Vector2.ZERO
-var _camera_base_rotation := Vector3.ZERO
+var _bot_speed_multiplier := 0.9
+var _bot_approach_active := false
+var _bot_current_approach_misses := false
+var _bot_mistake_offset := Vector2.ZERO
 var _camera_base_position := Vector3.ZERO
-var _look_yaw := 0.0
-var _look_pitch := 0.0
+var _is_human_paddle := false
+var _boost_fuel := 2.5
+var _base_rotation := Vector3.ZERO
+var _paddle_tilt := Vector2.ZERO
+var _pending_mouse_motion := Vector2.ZERO
+var _face_material: StandardMaterial3D
+var _boost_layer: CanvasLayer
+var _boost_bar: ProgressBar
+
+const FACE_COLORS := {
+	"PosZ": Color(0.91, 0.08, 0.12), # red
+	"NegZ": Color(1.0, 0.32, 0.035), # orange
+	"PosX": Color(0.035, 0.29, 0.96), # blue
+	"NegX": Color(0.035, 0.72, 0.22), # green
+	"PosY": Color(0.94, 0.95, 1.0), # white
+	"NegY": Color(1.0, 0.82, 0.025), # yellow
+}
 
 
 func _ready() -> void:
+	_boost_fuel = boost_fuel_max
+	_apply_face_color()
 	_rng.randomize()
+	_base_rotation = rotation
 	var camera := _get_face_camera()
 	if camera != null:
-		_camera_base_rotation = camera.rotation
 		_camera_base_position = camera.position
 	if multiplayer.multiplayer_peer is OfflineMultiplayerPeer and name == offline_test_paddle_name:
 		bot_enabled = false
@@ -31,9 +61,124 @@ func _ready() -> void:
 			camera.make_current()
 
 
+func _apply_face_color() -> void:
+	var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
+	if mesh == null:
+		return
+	var face_key := String(name).trim_prefix("Paddle_")
+	var face_color: Color = FACE_COLORS.get(face_key, Color.WHITE)
+	_face_material = StandardMaterial3D.new()
+	_face_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_face_material.albedo_color = face_color
+	_face_material.emission_enabled = true
+	_face_material.emission = face_color
+	_face_material.emission_energy_multiplier = 0.12
+	mesh.material_override = _face_material
+	_apply_paddle_transparency()
+
+
+func set_player_visual(is_player: bool) -> void:
+	_is_human_paddle = is_player
+	_apply_paddle_transparency()
+	if is_player:
+		_build_boost_meter()
+		_boost_layer.show()
+	else:
+		if _boost_layer != null:
+			_boost_layer.hide()
+
+
+func _apply_paddle_transparency() -> void:
+	if _face_material == null:
+		return
+	var color := _face_material.albedo_color
+	color.a = 0.78 if _is_human_paddle else 1.0
+	_face_material.albedo_color = color
+	_face_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA if _is_human_paddle else BaseMaterial3D.TRANSPARENCY_DISABLED
+
+
+func _build_boost_meter() -> void:
+	if _boost_layer != null:
+		return
+	_boost_layer = CanvasLayer.new()
+	_boost_layer.name = "PaddleBoostHUD"
+	_boost_layer.layer = 3
+	add_child(_boost_layer)
+	var root := Control.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_boost_layer.add_child(root)
+	var panel := PanelContainer.new()
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 1.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = -126.0
+	panel.offset_right = 126.0
+	panel.offset_top = -78.0
+	panel.offset_bottom = -18.0
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.015, 0.025, 0.06, 0.86)
+	panel_style.set_corner_radius_all(8)
+	panel.add_theme_stylebox_override("panel", panel_style)
+	root.add_child(panel)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 4)
+	panel.add_child(stack)
+	var label := Label.new()
+	label.text = "PADDLE BOOST  ·  SHIFT"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 13)
+	stack.add_child(label)
+	_boost_bar = ProgressBar.new()
+	_boost_bar.min_value = 0.0
+	_boost_bar.max_value = boost_fuel_max
+	_boost_bar.value = _boost_fuel
+	_boost_bar.show_percentage = false
+	_boost_bar.custom_minimum_size = Vector2(218, 16)
+	var bar_bg := StyleBoxFlat.new()
+	bar_bg.bg_color = Color(0.13, 0.16, 0.22, 1.0)
+	bar_bg.set_corner_radius_all(5)
+	_boost_bar.add_theme_stylebox_override("background", bar_bg)
+	var bar_fill := StyleBoxFlat.new()
+	bar_fill.bg_color = _face_material.albedo_color
+	bar_fill.set_corner_radius_all(5)
+	_boost_bar.add_theme_stylebox_override("fill", bar_fill)
+	stack.add_child(_boost_bar)
+
+
+func _process(delta: float) -> void:
+	if not match_active or not _is_local_human():
+		return
+	_update_ball_camera(delta)
+
+
+func _update_ball_camera(delta: float) -> void:
+	var camera := _get_face_camera()
+	var anchor := get_parent() as Node3D
+	var ball := get_tree().get_first_node_in_group("ball") as Node3D
+	if camera == null or anchor == null or ball == null:
+		return
+	var local_ball := anchor.to_local(ball.global_position)
+	var follow_offset := Vector3(
+		clampf(local_ball.x * camera_follow_amount, -camera_follow_limit, camera_follow_limit),
+		clampf(local_ball.y * camera_follow_amount, -camera_follow_limit, camera_follow_limit),
+		0.0
+	)
+	var blend := 1.0 - exp(-camera_smoothing * delta)
+	camera.position = camera.position.lerp(_camera_base_position + follow_offset, blend)
+	var face_up := anchor.global_basis.y.normalized()
+	var desired_transform := camera.global_transform.looking_at(ball.global_position, face_up)
+	var current_rotation := camera.global_basis.get_rotation_quaternion()
+	var target_rotation := desired_transform.basis.get_rotation_quaternion()
+	camera.global_basis = Basis(current_rotation.slerp(target_rotation, blend))
+
+
 func _physics_process(delta: float) -> void:
 	if not match_active or eliminated:
 		return
+	if _is_local_human():
+		_update_paddle_tilt(delta)
 	if multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		if name == offline_test_paddle_name and not bot_enabled:
 			_move_from_keyboard(delta)
@@ -46,6 +191,16 @@ func _physics_process(delta: float) -> void:
 		_move_from_keyboard(delta)
 
 
+func _input(event: InputEvent) -> void:
+	# Collect mouse movement separately from keyboard polling. The accumulated
+	# delta is applied with WASD in the next physics update, even when the cursor
+	# is visible instead of captured.
+	if not match_active or not _is_local_human():
+		return
+	if event is InputEventMouseMotion:
+		_pending_mouse_motion += event.relative
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not match_active or not _is_local_human():
 		return
@@ -53,21 +208,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseButton and event.pressed:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		_look_yaw = clampf(_look_yaw - event.relative.x * mouse_sensitivity, -PI * 0.5, PI * 0.5)
-		_look_pitch = clampf(_look_pitch - event.relative.y * mouse_sensitivity, -PI / 4.0, PI / 4.0)
-		var camera := _get_face_camera()
-		if camera != null:
-			camera.rotation = _camera_base_rotation + Vector3(_look_pitch, _look_yaw, 0.0)
-			var yaw_orbit := Basis(Vector3.UP, _look_yaw)
-			var pitch_orbit := Basis(Vector3.RIGHT, _look_pitch)
-			camera.position = yaw_orbit * pitch_orbit * _camera_base_position
+
+
+func _update_paddle_tilt(delta: float) -> void:
+	var max_tilt := deg_to_rad(max_paddle_tilt_degrees)
+	_paddle_tilt.x = clampf(_paddle_tilt.x + _pending_mouse_motion.y * mouse_tilt_sensitivity, -max_tilt, max_tilt)
+	_paddle_tilt.y = clampf(_paddle_tilt.y + _pending_mouse_motion.x * mouse_tilt_sensitivity, -max_tilt, max_tilt)
+	_pending_mouse_motion = Vector2.ZERO
+	var blend := 1.0 - exp(-tilt_return_speed * delta)
+	_paddle_tilt = _paddle_tilt.lerp(Vector2.ZERO, blend)
+	rotation = _base_rotation + Vector3(_paddle_tilt.x, _paddle_tilt.y, 0.0)
 
 
 func _move_from_keyboard(delta: float) -> void:
 	var x := Input.get_axis("paddle_left", "paddle_right")
 	var y := Input.get_axis("paddle_down", "paddle_up")
 	var input_vector := Vector2(x, y).limit_length(1.0)
+	var movement_speed := _get_boosted_speed(delta, input_vector.length_squared() > 0.0)
 	var face_direction := input_vector
 	var anchor := get_parent() as Node3D
 	var camera := _get_face_camera()
@@ -80,15 +237,26 @@ func _move_from_keyboard(delta: float) -> void:
 		)
 		if face_direction.length_squared() > 0.0:
 			face_direction = face_direction.normalized()
-	position.x = clampf(position.x + face_direction.x * speed * delta, -side_limit, side_limit)
-	position.y = clampf(position.y + face_direction.y * speed * delta, -side_limit, side_limit)
+	position.x = clampf(position.x + face_direction.x * movement_speed * delta, -side_limit, side_limit)
+	position.y = clampf(position.y + face_direction.y * movement_speed * delta, -side_limit, side_limit)
 	position.z = 0.0
+
+
+func _get_boosted_speed(delta: float, is_moving: bool) -> float:
+	var boosting := _is_human_paddle and is_moving and _boost_fuel > 0.0 and Input.is_action_pressed("paddle_boost")
+	if boosting:
+		_boost_fuel = maxf(0.0, _boost_fuel - boost_drain_per_second * delta)
+	else:
+		_boost_fuel = minf(boost_fuel_max, _boost_fuel + boost_recharge_per_second * delta)
+	if _boost_bar != null:
+		_boost_bar.value = _boost_fuel
+	return speed * boost_speed_multiplier if boosting else speed
 
 
 func _run_bot(delta: float) -> void:
 	if not multiplayer.is_server() and not multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		return
-	var ball := get_tree().get_first_node_in_group("ball") as Node3D
+	var ball := get_tree().get_first_node_in_group("ball") as CharacterBody3D
 	var anchor := get_parent() as Node3D
 	if ball == null or anchor == null:
 		return
@@ -96,13 +264,37 @@ func _run_bot(delta: float) -> void:
 	if _bot_timer >= bot_reaction_time:
 		_bot_timer = 0.0
 		var local_ball := anchor.to_local(ball.global_position)
+		var local_velocity: Vector3 = anchor.global_basis.inverse() * ball.velocity
+		var predicted := Vector2(local_ball.x, local_ball.y)
+		var intercept_time := -1.0
+		# Aim where the ball should reach this paddle's plane.
+		if absf(local_velocity.z) > 0.1:
+			intercept_time = -local_ball.z / local_velocity.z
+			if intercept_time > 0.0:
+				predicted += Vector2(local_velocity.x, local_velocity.y) * minf(intercept_time, 1.5)
+				if not _bot_approach_active:
+					_bot_approach_active = true
+					_bot_current_approach_misses = _rng.randf() < bot_miss_chance
+					if _bot_current_approach_misses:
+						# Make one believable bad read for this approach, then keep it
+						# consistent instead of rolling again every reaction tick.
+						var miss_axis := Vector2.RIGHT if _rng.randf() < 0.5 else Vector2.UP
+						_bot_mistake_offset = miss_axis * _rng.randf_range(1.35, 2.25) * (-1.0 if _rng.randf() < 0.5 else 1.0)
+				if _bot_current_approach_misses:
+					predicted += _bot_mistake_offset
+			else:
+				_bot_approach_active = false
+				_bot_current_approach_misses = false
+		else:
+			_bot_approach_active = false
+			_bot_current_approach_misses = false
 		var miss_margin := (1.0 - bot_accuracy) * 3.5
 		_bot_target = Vector2(
-			local_ball.x + _rng.randf_range(-miss_margin, miss_margin),
-			local_ball.y + _rng.randf_range(-miss_margin, miss_margin)
+			predicted.x + _rng.randf_range(-miss_margin, miss_margin),
+			predicted.y + _rng.randf_range(-miss_margin, miss_margin)
 		).clamp(Vector2(-side_limit, -side_limit), Vector2(side_limit, side_limit))
 	var difference := _bot_target - Vector2(position.x, position.y)
-	var bot_speed := speed * lerpf(0.55, 1.0, bot_accuracy)
+	var bot_speed := speed * _bot_speed_multiplier
 	var step := difference.limit_length(bot_speed * delta)
 	position.x = clampf(position.x + step.x, -side_limit, side_limit)
 	position.y = clampf(position.y + step.y, -side_limit, side_limit)
@@ -120,6 +312,15 @@ func _is_local_human() -> bool:
 func set_match_active(active: bool) -> void:
 	match_active = active
 	if not active:
+		_paddle_tilt = Vector2.ZERO
+		_pending_mouse_motion = Vector2.ZERO
+		rotation = _base_rotation
+	if active and _is_human_paddle:
+		_boost_fuel = boost_fuel_max
+		if _boost_bar != null:
+			_boost_bar.max_value = boost_fuel_max
+			_boost_bar.value = _boost_fuel
+	if not active:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif _is_local_human():
 		var camera := _get_face_camera()
@@ -130,6 +331,38 @@ func set_match_active(active: bool) -> void:
 
 func set_bot_mode(enabled: bool) -> void:
 	bot_enabled = enabled
+
+
+func set_bot_difficulty(level: int) -> void:
+	match level:
+		0: # Relaxed
+			bot_accuracy = 0.42
+			bot_miss_chance = 0.20
+			bot_reaction_time = 0.48
+			_bot_speed_multiplier = 0.72
+		1: # Classic
+			bot_accuracy = 0.70
+			bot_miss_chance = 0.10
+			bot_reaction_time = 0.24
+			_bot_speed_multiplier = 0.88
+		_: # Fierce
+			bot_accuracy = 0.91
+			bot_miss_chance = 0.04
+			bot_reaction_time = 0.10
+			_bot_speed_multiplier = 1.0
+
+
+func get_hit_force_multiplier() -> float:
+	var manager := get_node_or_null("../../GameManager")
+	if manager == null:
+		return 1.0
+	var current_lives := int(manager.call("get_face_lives", String(name)))
+	var maximum_lives := int(manager.get("starting_lives"))
+	if current_lives <= 0 or maximum_lives <= 1:
+		return 1.0
+	var life_fraction := clampf(float(current_lives - 1) / float(maximum_lives - 1), 0.0, 1.0)
+	# A full-life face returns the ball 4% softer; a face on its last life hits it 4% harder.
+	return lerpf(1.04, 0.96, life_fraction)
 
 
 func set_eliminated(value: bool) -> void:

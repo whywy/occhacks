@@ -29,9 +29,45 @@ func _ready() -> void:
 		global_position.z = plane_z
 	speed = maxf(start_speed, 0.1)
 	velocity = Vector3.ZERO
+	countdown_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	countdown_label.offset_left = -140.0
+	countdown_label.offset_top = -90.0
+	countdown_label.offset_right = 140.0
+	countdown_label.offset_bottom = 90.0
+	countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	countdown_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	countdown_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.35))
+	countdown_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	countdown_label.add_theme_constant_override("shadow_offset_x", 4)
+	countdown_label.add_theme_constant_override("shadow_offset_y", 4)
+	countdown_label.hide()
 
-	await get_tree().create_timer(0.6).timeout
-	countdown_label.text = ""
+
+func prepare_serve() -> void:
+	if not _simulates_ball():
+		return
+	reset_to_center()
+	countdown_label.show()
+	for seconds_left in range(countdown_seconds, 0, -1):
+		if not _match_is_active():
+			countdown_label.hide()
+			return
+		countdown_label.text = str(seconds_left)
+		await get_tree().create_timer(1.0).timeout
+	if not _match_is_active():
+		countdown_label.hide()
+		return
+	countdown_label.text = "GO!"
+	await get_tree().create_timer(0.3).timeout
+	countdown_label.hide()
+	if _match_is_active():
+		serve()
+
+
+func _match_is_active() -> bool:
+	var manager := get_node_or_null("../GameManager")
+	return manager != null and bool(manager.get("match_active"))
+
 
 func serve() -> void:
 	if not _simulates_ball():
@@ -82,6 +118,9 @@ func _physics_process(delta: float) -> void:
 	var collision := move_and_collide(velocity * delta)
 	if collision:
 		var normal := collision.get_normal()
+		var collider := collision.get_collider()
+		if collider is Node and collider.is_in_group("paddles"):
+			speed = clampf(speed * collider.get_hit_force_multiplier(), start_speed * 0.7, max_speed)
 		velocity = velocity.bounce(normal).normalized() * speed
 		bounced.emit()
 		_emit_sparks(collision.get_position(), normal)

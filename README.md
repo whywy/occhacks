@@ -1,14 +1,15 @@
 # Cube Pong
 
-A six-face 3D Pong prototype built with Godot 4.7 and GDScript.
+A six-face 3D Pong survival game built with Godot 4.7 and GDScript. The current build is single-player: you control one face and compete against five bots. Each cube face and paddle has its own Rubik's Cube color: red, orange, blue, green, white, or yellow.
 
-## Run it
+## Start playing
 
-1. Open this folder as a Godot project and run the Arena (`F6` while `arena.tscn` is open, or `F5` for the main scene).
-2. Select **Local test (WASD + bots)** to play one paddle against five bots. The default test face is `Paddle_PosZ`; change `offline_test_paddle_name` on the paddle script if you want a different face.
-3. For LAN, one computer selects **Host LAN game** and the others select **Find a host on this LAN**. The host can start the match from the lobby. `F1` and `F2` are keyboard shortcuts for host and discovery.
-4. During a match, WASD moves the assigned paddle. Move the mouse to look around; horizontal look is limited to 180 degrees. Press `Esc` to release the mouse and click the game window to capture it again.
+1. Open this folder in Godot and press **F5** (or run `scenes/arena.tscn` with **F6**).
+2. Choose your face and bot difficulty, then click **Play against 5 bots**. Faces use a consistent color and axis key: front +Z red, back −Z orange, right +X blue, left −X green, top +Y white, and bottom −Y yellow.
+3. Move with **WASD** relative to your chosen face. Move or flick the mouse horizontally or vertically at the same time to tilt the paddle and steer the ball on a hit; the paddle gradually springs back to neutral. Hold **Shift while moving** to spend boost fuel for a 1.4× paddle speed increase. The meter recharges when you are not boosting. Your paddle is slightly transparent so you can see the ball through it. Each round begins with a centered 3-second countdown. The face cameras are centered and use a wider 95-degree field of view. The camera smoothly tracks the ball, with a small pan as it moves. Press **Esc** to release the mouse.
 
-The lobby lists each player's IPv4 address and assigned face. Empty faces are controlled by bots. Each face starts with three lives. A ball entering a face's scoring area removes one life; the next serve starts a faster round. The match lasts three minutes, and the player with the most lives wins when time expires.
+## How to win
 
-For LAN play, both peers need to be on the same local network, and UDP ports 8910 (game) and 8911 (host discovery) must be allowed by the computers' firewalls.
+Each face has three lives. A colored crater pulse marks the face where the ball scores. Faces with more lives return the ball slightly softer; faces on their last life return it slightly faster. Keep your paddle between the ball and your face's scoring area. If the ball passes your paddle, your face loses a life. The ball serves again faster after each lost life. Eliminate all five bots to win, or survive until the three-minute timer ends with the most lives. If you lose all three lives, the game slows exponentially while the screen fades into the defeat screen.
+
+**Relaxed**, **Classic**, and **Fierce** adjust bot aim, reaction time, speed, and chance of making a bad intercept read (20%, 10%, and 4% per incoming shot, respectively). Choose a different face and difficulty from the menu after a match to play again.

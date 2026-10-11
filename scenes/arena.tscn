@@ -6,6 +6,10 @@
 [ext_resource type="Script" uid="uid://b7ah1e1780eqt" path="res://game_manager.gd" id="4_gm"]
 [ext_resource type="Texture2D" uid="uid://c68ek7jqs63js" path="res://space-occhacks.jpeg" id="5_7ft05"]
 
+[sub_resource type="StandardMaterial3D" id="Face_Red"]
+shading_mode = 0
+albedo_color = Color(0.91, 0.08, 0.12, 1)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf776"]
 albedo_color = Color(0.078431375, 1, 1, 1)
 
@@ -13,6 +17,26 @@ albedo_color = Color(0.078431375, 1, 1, 1)
 material = SubResource("StandardMaterial3D_cf776")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_dea70"]
+
+[sub_resource type="StandardMaterial3D" id="Face_Orange"]
+shading_mode = 0
+albedo_color = Color(1, 0.32, 0.035, 1)
+
+[sub_resource type="StandardMaterial3D" id="Face_Blue"]
+shading_mode = 0
+albedo_color = Color(0.035, 0.29, 0.96, 1)
+
+[sub_resource type="StandardMaterial3D" id="Face_Green"]
+shading_mode = 0
+albedo_color = Color(0.035, 0.72, 0.22, 1)
+
+[sub_resource type="StandardMaterial3D" id="Face_White"]
+shading_mode = 0
+albedo_color = Color(0.94, 0.95, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="Face_Yellow"]
+shading_mode = 0
+albedo_color = Color(1, 0.82, 0.025, 1)
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_7ft05"]
 properties/0/path = NodePath(".:position")
@@ -67,7 +91,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6936214, 0)
 
 [node name="Wall_PosZ" type="MeshInstance3D" parent="." unique_id=891444800]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 5)
-material_override = SubResource("StandardMaterial3D_cf776")
+material_override = SubResource("Face_Red")
 transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
@@ -81,7 +105,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegZ" type="MeshInstance3D" parent="." unique_id=1593964721]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, -5)
-material_override = SubResource("StandardMaterial3D_cf776")
+material_override = SubResource("Face_Orange")
 transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
@@ -95,7 +119,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_PosX" type="MeshInstance3D" parent="." unique_id=683993672]
 transform = Transform3D(-4.371139e-07, 0, 0.2, 0, 10, 0, -10, 0, -8.742278e-09, 5, 0, 0)
-material_override = SubResource("StandardMaterial3D_cf776")
+material_override = SubResource("Face_Blue")
 transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
@@ -109,7 +133,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegX" type="MeshInstance3D" parent="." unique_id=150221336]
 transform = Transform3D(-4.371139e-07, 0, 0.2, 0, 10, 0, -10, 0, -8.742278e-09, -5, 0, 0)
-material_override = SubResource("StandardMaterial3D_cf776")
+material_override = SubResource("Face_Green")
 transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
@@ -123,7 +147,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_PosY" type="MeshInstance3D" parent="." unique_id=1421811185]
 transform = Transform3D(10, 0, 0, 0, -4.371139e-07, -0.2, 0, 10, -8.742278e-09, 0, 5, 0)
-material_override = SubResource("StandardMaterial3D_cf776")
+material_override = SubResource("Face_White")
 transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
@@ -137,7 +161,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegY" type="MeshInstance3D" parent="." unique_id=312531998]
 transform = Transform3D(10, 0, 0, 0, -4.371139e-07, -0.2, 0, 10, -8.742278e-09, 0, -5, 0)
-material_override = SubResource("StandardMaterial3D_cf776")
+material_override = SubResource("Face_Yellow")
 transparency = 0.68
 mesh = SubResource("BoxMesh_dea70")
 
@@ -164,8 +188,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.7)
 replication_config = SubResource("SceneReplicationConfig_7ft05")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_PosZ" unique_id=703256264]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
-fov = 80.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+fov = 95.0
 
 [node name="Anchor_NegZ" type="Node3D" parent="." unique_id=1977032964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.7)
@@ -177,7 +201,7 @@ replication_config = SubResource("SceneReplicationConfig_4ag8t")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_NegZ" unique_id=1283632584]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -4)
-fov = 80.0
+fov = 95.0
 
 [node name="Anchor_PosX" type="Node3D" parent="." unique_id=644951180]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 4.7, 0, 0)
@@ -188,8 +212,8 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 4.7,
 replication_config = SubResource("SceneReplicationConfig_dpxgc")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_PosX" unique_id=2062849115]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
-fov = 80.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+fov = 95.0
 
 [node name="Anchor_NegX" type="Node3D" parent="." unique_id=1965103804]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.7, 0, 0)
@@ -200,8 +224,8 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.7
 replication_config = SubResource("SceneReplicationConfig_oexds")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_NegX" unique_id=70205488]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2, 0, -4)
-fov = 80.0
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -4)
+fov = 95.0
 
 [node name="Anchor_PosY" type="Node3D" parent="." unique_id=1583095174]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 4.7, 0)
@@ -212,8 +236,8 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 4
 replication_config = SubResource("SceneReplicationConfig_naajo")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_PosY" unique_id=472465608]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2, 0, -4)
-fov = 80.0
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -4)
+fov = 95.0
 
 [node name="Anchor_NegY" type="Node3D" parent="." unique_id=992731149]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, -4.7, 0)
@@ -224,8 +248,8 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, -
 replication_config = SubResource("SceneReplicationConfig_41jku")
 
 [node name="PlayerCamera" type="Camera3D" parent="Anchor_NegY" unique_id=230089778]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
-fov = 80.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+fov = 95.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=481138624]
 environment = SubResource("Environment_xdvfk")

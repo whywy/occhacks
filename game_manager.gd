@@ -3,10 +3,21 @@ extends Node
 signal match_started
 signal match_finished
 
+const FACE_LABELS := {
+	"Paddle_PosZ": "Front +Z / Red",
+	"Paddle_NegZ": "Back −Z / Orange",
+	"Paddle_PosX": "Right +X / Blue",
+	"Paddle_NegX": "Left −X / Green",
+	"Paddle_PosY": "Top +Y / White",
+	"Paddle_NegY": "Bottom −Y / Yellow",
+}
+
 @export var time_limit_seconds: float = 180.0
 @export var starting_lives: int = 3
 
 var match_active := false
+var solo_player_face: StringName = &"Paddle_PosZ"
+var last_result := ""
 var round_number := 1
 var time_remaining := 180.0
 var lives: Dictionary = {}
@@ -17,6 +28,12 @@ var _hud_label: Label
 var _sound_players: Array[AudioStreamPlayer] = []
 var _sound_index := 0
 var _publish_timer := 0.0
+var _defeat_transition_active := false
+var _defeat_started_usec := 0
+var _defeat_duration_seconds := 3.2
+var _defeat_overlay: ColorRect
+var _defeat_title: Label
+var _defeat_button: Button
 
 
 func _ready() -> void:
@@ -29,11 +46,15 @@ func _ready() -> void:
 		lives[paddle.name] = starting_lives
 		_create_score_area(paddle)
 	_build_hud()
+	_build_defeat_screen()
 	_build_sounds()
 	_publish_state("")
 
 
 func _process(delta: float) -> void:
+	if _defeat_transition_active:
+		_update_defeat_transition()
+		return
 	if not match_active or not _is_authoritative():
 		return
 	time_remaining = maxf(0.0, time_remaining - delta)
@@ -76,6 +97,7 @@ func _on_scoring_box_entered(body: Node3D, face_name: String) -> void:
 	_score_lock = true
 	var ball := get_node_or_null("../Ball")
 	if ball != null:
+		_show_crater_impact(face_name, body.global_position)
 		ball.call_deferred("stop_ball")
 	call_deferred("_apply_score", face_name)
 
@@ -91,15 +113,86 @@ func _apply_score(face_name: String) -> void:
 		ball.increase_speed_for_round()
 	_broadcast_sound("score")
 	_publish_state("%s lost a life" % face_name)
-	if _active_face_count() <= 1:
-		var winner := _last_active_face()
-		_finish_match(winner)
+	if face_name == String(solo_player_face) and is_eliminated:
+		if multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
+			_begin_defeat_transition("DEFEAT: The bots took your last life.")
+		else:
+			_finish_match("Bots win! You were eliminated.")
 		return
-	await get_tree().create_timer(0.8).timeout
+	if _active_face_count() <= 1:
+		var winner_face := _last_active_face()
+		var result := "You win! Last face standing." if winner_face == String(solo_player_face) else "Bots win: %s survived." % winner_face.trim_prefix("Paddle_")
+		_finish_match(result)
+		return
 	if match_active and ball != null:
-		ball.reset_to_center()
-		ball.serve()
+		await ball.prepare_serve()
 	_score_lock = false
+
+
+func _show_crater_impact(face_name: String, world_position: Vector3) -> void:
+	var paddle: Node3D = _paddles.get(face_name) as Node3D
+	if paddle == null:
+		return
+	var anchor := paddle.get_parent() as Node3D
+	if anchor == null:
+		return
+	var local_hit := anchor.to_local(world_position)
+	var local_outward := anchor.global_basis.inverse() * anchor.global_position.normalized()
+	var outward_sign := 1.0 if local_outward.z >= 0.0 else -1.0
+	var impact := Node3D.new()
+	impact.name = "CraterImpact"
+	impact.position = Vector3(local_hit.x, local_hit.y, outward_sign * 0.31)
+	anchor.add_child(impact)
+
+	var face_colors := {
+		"Paddle_PosZ": Color(0.91, 0.08, 0.12),
+		"Paddle_NegZ": Color(1.0, 0.32, 0.035),
+		"Paddle_PosX": Color(0.035, 0.29, 0.96),
+		"Paddle_NegX": Color(0.035, 0.72, 0.22),
+		"Paddle_PosY": Color(0.94, 0.95, 1.0),
+		"Paddle_NegY": Color(1.0, 0.82, 0.025),
+	}
+	var face_color: Color = face_colors.get(face_name, Color.WHITE)
+
+	var crater := MeshInstance3D.new()
+	var crater_mesh := SphereMesh.new()
+	crater_mesh.radius = 0.45
+	crater_mesh.height = 0.9
+	crater.mesh = crater_mesh
+	crater.scale = Vector3(1.0, 1.0, 0.07)
+	var crater_material := StandardMaterial3D.new()
+	crater_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	crater_material.albedo_color = Color(0.025, 0.025, 0.04, 1.0)
+	crater_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	crater_material.albedo_color.a = 0.82
+	crater.material_override = crater_material
+	impact.add_child(crater)
+
+	var ripple := MeshInstance3D.new()
+	var ripple_mesh := TorusMesh.new()
+	ripple_mesh.inner_radius = 0.55
+	ripple_mesh.outer_radius = 0.72
+	ripple.mesh = ripple_mesh
+	ripple.rotation.x = PI * 0.5
+	var ripple_material := StandardMaterial3D.new()
+	ripple_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ripple_material.albedo_color = face_color.lightened(0.2)
+	ripple_material.emission_enabled = true
+	ripple_material.emission = face_color
+	ripple_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ripple.material_override = ripple_material
+	impact.add_child(ripple)
+
+	impact.scale = Vector3(0.12, 0.12, 0.12)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(impact, "scale", Vector3(1.45, 1.45, 1.45), 0.48).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(crater_material, "albedo_color:a", 0.0, 0.85)
+	tween.tween_property(ripple_material, "albedo_color:a", 0.0, 0.62)
+	tween.chain().tween_callback(impact.queue_free)
+
+
+func get_face_lives(face_name: String) -> int:
+	return int(lives.get(StringName(face_name), starting_lives))
 
 
 func _active_face_count() -> int:
@@ -118,16 +211,18 @@ func _last_active_face() -> String:
 
 
 func _end_by_lives() -> void:
-	var winner := "No one"
+	var winner_face := "No one"
 	var best := -1
 	for face_name in lives:
 		if int(lives[face_name]) > best:
 			best = int(lives[face_name])
-			winner = String(face_name)
-	_finish_match(winner)
+			winner_face = String(face_name)
+	var result := "You win! You survived the timer." if winner_face == String(solo_player_face) else "Bots win: %s had the most lives." % winner_face.trim_prefix("Paddle_")
+	_finish_match(result)
 
 
 func _finish_match(winner: String) -> void:
+	last_result = winner
 	if multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		end_match(winner)
 	else:
@@ -168,6 +263,10 @@ func sync_active_match(seconds_left: float, round_value: int, lives_state: Dicti
 
 
 func _begin_match_local() -> void:
+	Engine.time_scale = 1.0
+	_defeat_transition_active = false
+	if _defeat_overlay != null:
+		_defeat_overlay.hide()
 	match_active = true
 	_score_lock = false
 	round_number = 1
@@ -179,10 +278,12 @@ func _begin_match_local() -> void:
 	var ball := get_node_or_null("../Ball")
 	if ball != null:
 		ball.speed = ball.start_speed
-		ball.serve()
-	_publish_state("Match started")
+		ball.reset_to_center()
+	_publish_state("Get ready")
 	_broadcast_sound("serve")
 	match_started.emit()
+	if ball != null:
+		await ball.prepare_serve()
 
 
 @rpc("authority", "call_local", "reliable")
@@ -197,6 +298,90 @@ func end_match(winner: String) -> void:
 	_publish_state("Winner: %s" % winner)
 	_broadcast_sound("game_over")
 	match_finished.emit()
+
+
+func _build_defeat_screen() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "DefeatScreen"
+	layer.layer = 10
+	add_child(layer)
+	_defeat_overlay = ColorRect.new()
+	_defeat_overlay.name = "DefeatOverlay"
+	_defeat_overlay.color = Color(0.008, 0.012, 0.025, 0.0)
+	_defeat_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_defeat_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(_defeat_overlay)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_defeat_overlay.add_child(center)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 18)
+	center.add_child(stack)
+	_defeat_title = Label.new()
+	_defeat_title.text = "DEFEAT"
+	_defeat_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_defeat_title.add_theme_font_size_override("font_size", 56)
+	_defeat_title.modulate.a = 0.0
+	stack.add_child(_defeat_title)
+	var message := Label.new()
+	message.text = "Your face has been eliminated."
+	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message.add_theme_font_size_override("font_size", 20)
+	message.modulate.a = 0.0
+	stack.add_child(message)
+	_defeat_button = Button.new()
+	_defeat_button.text = "Return to menu"
+	_defeat_button.custom_minimum_size = Vector2(220, 48)
+	_defeat_button.modulate.a = 0.0
+	_defeat_button.disabled = true
+	_defeat_button.pressed.connect(_dismiss_defeat_screen)
+	stack.add_child(_defeat_button)
+	_defeat_overlay.hide()
+
+
+func _begin_defeat_transition(result: String) -> void:
+	if _defeat_transition_active:
+		return
+	last_result = result
+	_defeat_transition_active = true
+	_defeat_started_usec = Time.get_ticks_usec()
+	_defeat_overlay.color.a = 0.0
+	_defeat_title.modulate.a = 0.0
+	_defeat_button.modulate.a = 0.0
+	_defeat_button.disabled = true
+	_defeat_overlay.show()
+
+
+func _update_defeat_transition() -> void:
+	# Wall-clock time keeps this transition moving while Engine.time_scale slows the game.
+	var elapsed := float(Time.get_ticks_usec() - _defeat_started_usec) / 1000000.0
+	var progress := clampf(elapsed / _defeat_duration_seconds, 0.0, 1.0)
+	Engine.time_scale = exp(log(0.12) * progress)
+	_defeat_overlay.color.a = smoothstep(0.0, 1.0, progress) * 0.92
+	var reveal := clampf((progress - 0.58) / 0.28, 0.0, 1.0)
+	_defeat_title.modulate.a = reveal
+	for child in _defeat_title.get_parent().get_children():
+		if child is Label and child != _defeat_title:
+			child.modulate.a = reveal
+	_defeat_button.modulate.a = reveal
+	if progress >= 1.0:
+		_defeat_transition_active = false
+		Engine.time_scale = 1.0
+		_defeat_button.disabled = false
+		_defeat_button.grab_focus()
+		_finish_match(last_result)
+
+
+func _dismiss_defeat_screen() -> void:
+	Engine.time_scale = 1.0
+	_defeat_overlay.hide()
+	var menu := get_parent().get_node_or_null("SoloMenu")
+	if menu != null:
+		menu.show()
+
+
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
 
 
 @rpc("authority", "call_local", "reliable")
@@ -245,7 +430,7 @@ func receive_hud_state(seconds_left: float, round_value: int, lives_state: Dicti
 		return
 	var lines := ["Time  %s      Round  %d" % [_format_time(seconds_left), round_value]]
 	for face_name in lives_state:
-		lines.append("%s  %d lives" % [String(face_name).replace("Paddle_", ""), int(lives_state[face_name])])
+		lines.append("%s  %d lives" % [FACE_LABELS.get(String(face_name), String(face_name)), int(lives_state[face_name])])
 	if message != "":
 		lines.insert(1, message)
 	if not active and message.begins_with("Winner:"):
