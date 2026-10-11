@@ -40,11 +40,10 @@ curve = SubResource("Curve_7s4qf")
 particle_flag_align_y = true
 direction = Vector3(0, 1, 0)
 spread = 60.0
-initial_velocity_min = 0.5
-initial_velocity_max = 2.0
-gravity = Vector3(0, -2, 0)
-damping_min = 1.0
-damping_max = 2.0
+initial_velocity_min = 1.0
+initial_velocity_max = 5.0
+gravity = Vector3(0, -0.5, 0)
+damping_max = 1.0
 scale_curve = SubResource("CurveTexture_b2qx6")
 color_ramp = SubResource("GradientTexture1D_e8hal")
 
@@ -69,8 +68,8 @@ shape = SubResource("SphereShape3D_dea70")
 
 [node name="Sparks" type="GPUParticles3D" parent="." unique_id=418179591]
 emitting = false
-amount = 40
-lifetime = 3.0
+amount = 70
+lifetime = 1.5
 one_shot = true
 explosiveness = 1.0
 process_material = SubResource("ParticleProcessMaterial_jsssl")

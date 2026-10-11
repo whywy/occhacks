@@ -36,7 +36,7 @@ func _physics_process(delta: float) -> void:
 		var normal := collision.get_normal()
 		velocity = velocity.bounce(normal)
 
-		speed = min(speed + speed_gain_per_hit, max_speed)
+		#speed = min(speed + speed_gain_per_hit, max_speed)
 		_emit_sparks(collision.get_position(), normal)
 
 	if lock_z:
@@ -44,7 +44,7 @@ func _physics_process(delta: float) -> void:
 		global_position.z = plane_z
 
 	# Keep the speed constant after bounces
-	velocity = velocity.normalized() * speed
+	#velocity = velocity.normalized() * speed
 
 
 func _emit_sparks(hit_position: Vector3, normal: Vector3) -> void:
