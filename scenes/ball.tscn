@@ -1,6 +1,15 @@
 [gd_scene format=3 uid="uid://u1dh5komdpgy"]
 
 [ext_resource type="Script" uid="uid://cakrdl0nu1hdl" path="res://scenes/ball.gd" id="1_7s4qf"]
+[ext_resource type="Shader" uid="uid://bqxjxddfndxck" path="res://scenes/ball.gdshader" id="2_cxlvu"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yujqa"]
+render_priority = 0
+shader = ExtResource("2_cxlvu")
+shader_parameter/center_color = Color(1, 0, 0, 1)
+shader_parameter/edge_color = Color(1, 0.85, 0.1, 1)
+shader_parameter/edge_power = 2.0
+shader_parameter/energy = 3.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf776"]
 albedo_color = Color(0.9843137, 1, 0, 1)
@@ -52,6 +61,7 @@ size = Vector3(0.01, 0.15, 0.01)
 script = ExtResource("1_7s4qf")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=102238728]
+material_override = SubResource("ShaderMaterial_yujqa")
 mesh = SubResource("SphereMesh_dea70")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1608683870]
