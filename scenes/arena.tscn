@@ -162,3 +162,5 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, -
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Anchor_NegY/Paddle_NegY" unique_id=2066110334]
 replication_config = SubResource("SceneReplicationConfig_41jku")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=481138624]
