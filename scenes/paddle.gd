@@ -34,6 +34,10 @@ var _base_rotation := Vector3.ZERO
 var _paddle_tilt := Vector2.ZERO
 var _pending_mouse_motion := Vector2.ZERO
 var _face_material: StandardMaterial3D
+var _face_color := Color.WHITE
+var _on_fire := false
+var _fire_time := 0.0
+var _fire_light: OmniLight3D
 var _boost_layer: CanvasLayer
 var _boost_bar: ProgressBar
 
@@ -67,6 +71,7 @@ func _apply_face_color() -> void:
 		return
 	var face_key := String(name).trim_prefix("Paddle_")
 	var face_color: Color = FACE_COLORS.get(face_key, Color.WHITE)
+	_face_color = face_color
 	_face_material = StandardMaterial3D.new()
 	_face_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_face_material.albedo_color = face_color
@@ -80,12 +85,8 @@ func _apply_face_color() -> void:
 func set_player_visual(is_player: bool) -> void:
 	_is_human_paddle = is_player
 	_apply_paddle_transparency()
-	if is_player:
-		_build_boost_meter()
-		_boost_layer.show()
-	else:
-		if _boost_layer != null:
-			_boost_layer.hide()
+	if _boost_layer != null:
+		_boost_layer.visible = is_player and match_active and _is_local_human()
 
 
 func _apply_paddle_transparency() -> void:
@@ -148,9 +149,46 @@ func _build_boost_meter() -> void:
 
 
 func _process(delta: float) -> void:
+	_update_fire_glow(delta)
 	if not match_active or not _is_local_human():
 		return
 	_update_ball_camera(delta)
+
+
+func set_on_fire(value: bool) -> void:
+	_on_fire = value
+	if value:
+		_ensure_fire_light()
+		if _fire_light != null:
+			_fire_light.show()
+	else:
+		if _face_material != null:
+			_face_material.emission_energy_multiplier = 0.12
+		if _fire_light != null:
+			_fire_light.hide()
+
+
+func _ensure_fire_light() -> void:
+	if _fire_light != null:
+		return
+	_fire_light = OmniLight3D.new()
+	_fire_light.name = "OnFireGlow"
+	_fire_light.light_color = _face_color
+	_fire_light.light_energy = 0.7
+	_fire_light.omni_range = 3.2
+	_fire_light.shadow_enabled = false
+	add_child(_fire_light)
+
+
+func _update_fire_glow(delta: float) -> void:
+	if not _on_fire:
+		return
+	_fire_time += delta
+	var pulse := 0.5 + 0.5 * sin(_fire_time * 7.0)
+	if _face_material != null:
+		_face_material.emission_energy_multiplier = lerpf(0.9, 2.1, pulse)
+	if _fire_light != null:
+		_fire_light.light_energy = lerpf(0.45, 1.1, pulse)
 
 
 func _update_ball_camera(delta: float) -> void:
@@ -191,14 +229,11 @@ func _physics_process(delta: float) -> void:
 		_move_from_keyboard(delta)
 
 
-func _input(event: InputEvent) -> void:
-	# Collect mouse movement separately from keyboard polling. The accumulated
-	# delta is applied with WASD in the next physics update, even when the cursor
-	# is visible instead of captured.
-	if not match_active or not _is_local_human():
-		return
-	if event is InputEventMouseMotion:
-		_pending_mouse_motion += event.relative
+func add_mouse_tilt_motion(mouse_delta: Vector2) -> void:
+	# The Arena routes mouse motion only to the selected human paddle, avoiding
+	# competing input callbacks across the six sibling paddle instances.
+	if match_active and _is_local_human():
+		_pending_mouse_motion += mouse_delta
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -315,11 +350,18 @@ func set_match_active(active: bool) -> void:
 		_paddle_tilt = Vector2.ZERO
 		_pending_mouse_motion = Vector2.ZERO
 		rotation = _base_rotation
-	if active and _is_human_paddle:
+	if active and _is_human_paddle and _is_local_human():
+		# Create the boost HUD only when gameplay is active. The player can be
+		# selected from the menu earlier, but that must not show gameplay UI.
+		_build_boost_meter()
+		_boost_layer.show()
 		_boost_fuel = boost_fuel_max
 		if _boost_bar != null:
 			_boost_bar.max_value = boost_fuel_max
 			_boost_bar.value = _boost_fuel
+	else:
+		if _boost_layer != null:
+			_boost_layer.hide()
 	if not active:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif _is_local_human():
@@ -366,11 +408,50 @@ func get_hit_force_multiplier() -> float:
 
 
 func set_eliminated(value: bool) -> void:
+	var was_eliminated := eliminated
 	eliminated = value
-	visible = not value
+	if value:
+		visible = false
+	else:
+		visible = true
+		if was_eliminated:
+			position = Vector3.ZERO
+			rotation = _base_rotation
+			scale = Vector3.ONE
 	var shape := get_node_or_null("CollisionShape3D") as CollisionShape3D
 	if shape != null:
 		shape.set_deferred("disabled", value)
+
+
+func play_elimination_suction(world_impact_position: Vector3) -> void:
+	if eliminated:
+		return
+	eliminated = true
+	var shape := get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if shape != null:
+		shape.set_deferred("disabled", true)
+	if _boost_layer != null:
+		_boost_layer.hide()
+	var anchor := get_parent() as Node3D
+	if anchor == null:
+		visible = false
+		return
+	var impact_local := anchor.to_local(world_impact_position)
+	var sink_direction := (anchor.global_basis.inverse() * anchor.global_position.normalized()).normalized()
+	var target_position := Vector3(impact_local.x, impact_local.y, position.z)
+	var target_rotation := rotation + Vector3(0.0, 0.0, TAU * 1.5)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "position", target_position, 0.72)
+	tween.tween_property(self, "rotation", target_rotation, 0.72)
+	tween.tween_property(self, "scale", Vector3(0.08, 0.08, 0.08), 0.72)
+	tween.chain().tween_property(self, "position", target_position + sink_direction * 0.32, 0.18)
+	tween.tween_callback(func() -> void:
+		visible = false
+		position = target_position
+		scale = Vector3.ONE
+	)
 
 
 @rpc("any_peer", "call_local", "reliable")
