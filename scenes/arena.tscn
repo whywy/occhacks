@@ -5,6 +5,10 @@
 [ext_resource type="Script" uid="uid://ctrmth5d2o6n2" path="res://network_manager.gd" id="1_xdvfk"]
 [ext_resource type="Script" uid="uid://cakrdl0nu1hdl" path="res://scenes/ball.gd" id="2_olpmc"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xdvfk"]
+transparency = 1
+albedo_color = Color(1, 1, 1, 0.05882353)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf776"]
 albedo_color = Color(0.078431375, 1, 1, 1)
 
@@ -51,6 +55,7 @@ script = ExtResource("2_olpmc")
 
 [node name="Wall_PosZ" type="MeshInstance3D" parent="." unique_id=891444800]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 5)
+material_override = SubResource("StandardMaterial3D_xdvfk")
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosZ" unique_id=1026158420]
@@ -61,6 +66,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegZ" type="MeshInstance3D" parent="." unique_id=1593964721]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, -5)
+material_override = SubResource("StandardMaterial3D_xdvfk")
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegZ" unique_id=21389258]
@@ -71,6 +77,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_PosX" type="MeshInstance3D" parent="." unique_id=683993672]
 transform = Transform3D(-4.371139e-07, 0, 0.2, 0, 10, 0, -10, 0, -8.742278e-09, 5, 0, 0)
+material_override = SubResource("StandardMaterial3D_xdvfk")
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosX" unique_id=834606508]
@@ -81,6 +88,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegX" type="MeshInstance3D" parent="." unique_id=150221336]
 transform = Transform3D(-4.371139e-07, 0, 0.2, 0, 10, 0, -10, 0, -8.742278e-09, -5, 0, 0)
+material_override = SubResource("StandardMaterial3D_xdvfk")
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegX" unique_id=1596354816]
@@ -91,6 +99,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_PosY" type="MeshInstance3D" parent="." unique_id=1421811185]
 transform = Transform3D(10, 0, 0, 0, -4.371139e-07, -0.2, 0, 10, -8.742278e-09, 0, 5, 0)
+material_override = SubResource("StandardMaterial3D_xdvfk")
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_PosY" unique_id=556286001]
@@ -101,6 +110,7 @@ shape = SubResource("BoxShape3D_dea70")
 
 [node name="Wall_NegY" type="MeshInstance3D" parent="." unique_id=312531998]
 transform = Transform3D(10, 0, 0, 0, -4.371139e-07, -0.2, 0, 10, -8.742278e-09, 0, -5, 0)
+material_override = SubResource("StandardMaterial3D_xdvfk")
 mesh = SubResource("BoxMesh_dea70")
 
 [node name="WallBody" type="StaticBody3D" parent="Wall_NegY" unique_id=1840729703]
@@ -110,8 +120,8 @@ transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 0.2, 0, 0, 0)
 shape = SubResource("BoxShape3D_dea70")
 
 [node name="DebugCamera" type="Camera3D" parent="." unique_id=1740400600]
-transform = Transform3D(-0.021814447, -0.03489227, -0.99915296, 0, 0.9993908, -0.034900572, 0.99976206, -0.0007613367, -0.021801157, -4.0000076, 3.0000086, 7.6293945e-06)
-current = true
+transform = Transform3D(0.70710677, -0.3641869, 0.6061087, 0, 0.8571673, 0.515038, -0.70710677, -0.3641869, 0.6061087, 14, 12, 14)
+visible = false
 fov = 102.0
 
 [node name="Anchor_PosZ" type="Node3D" parent="." unique_id=285258275]
@@ -122,6 +132,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.7)
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Anchor_PosZ/Paddle_PosZ" unique_id=326212610]
 replication_config = SubResource("SceneReplicationConfig_7ft05")
 
+[node name="PlayerCamera" type="Camera3D" parent="Anchor_PosZ" unique_id=703256264]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
+fov = 80.0
+
 [node name="Anchor_NegZ" type="Node3D" parent="." unique_id=1977032964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.7)
 
@@ -129,6 +143,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.7)
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Anchor_NegZ/Paddle_NegZ" unique_id=931161776]
 replication_config = SubResource("SceneReplicationConfig_4ag8t")
+
+[node name="PlayerCamera" type="Camera3D" parent="Anchor_NegZ" unique_id=1283632584]
+transform = Transform3D(-0.17364821, 0, 0.9848078, 0, 1, 0, -0.9848078, 0, -0.17364821, 2, 0, 4)
+fov = 80.0
 
 [node name="Anchor_PosX" type="Node3D" parent="." unique_id=644951180]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 4.7, 0, 0)
@@ -138,6 +156,10 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 4.7,
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Anchor_PosX/Paddle_PosX" unique_id=1999163553]
 replication_config = SubResource("SceneReplicationConfig_dpxgc")
 
+[node name="PlayerCamera" type="Camera3D" parent="Anchor_PosX" unique_id=2062849115]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
+fov = 80.0
+
 [node name="Anchor_NegX" type="Node3D" parent="." unique_id=1965103804]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.7, 0, 0)
 
@@ -145,6 +167,10 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.7
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Anchor_NegX/Paddle_NegX" unique_id=1164868009]
 replication_config = SubResource("SceneReplicationConfig_oexds")
+
+[node name="PlayerCamera" type="Camera3D" parent="Anchor_NegX" unique_id=70205488]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2, 0, -4)
+fov = 80.0
 
 [node name="Anchor_PosY" type="Node3D" parent="." unique_id=1583095174]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 4.7, 0)
@@ -154,6 +180,10 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 4
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Anchor_PosY/Paddle_PosY" unique_id=1690384646]
 replication_config = SubResource("SceneReplicationConfig_naajo")
 
+[node name="PlayerCamera" type="Camera3D" parent="Anchor_PosY" unique_id=472465608]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2, 0, -4)
+fov = 80.0
+
 [node name="Anchor_NegY" type="Node3D" parent="." unique_id=992731149]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, -4.7, 0)
 
@@ -161,3 +191,8 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, -
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Anchor_NegY/Paddle_NegY" unique_id=2066110334]
 replication_config = SubResource("SceneReplicationConfig_41jku")
+
+[node name="PlayerCamera" type="Camera3D" parent="Anchor_NegY" unique_id=230089778]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
+current = true
+fov = 80.0
